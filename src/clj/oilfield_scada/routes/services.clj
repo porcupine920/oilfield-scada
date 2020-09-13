@@ -46,7 +46,6 @@
                                 :oil_field string? :oil_plant string? :oil_well string?}}
             :responses {200 {:body {:type string? :device_id string? :device_type string? :result pos-int?}}}
             :handler (fn [{{body :body} :parameters}]
-                       (prn body)
                        (try
                          (create-well-info-from-json! body)
                          {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result 200}}
