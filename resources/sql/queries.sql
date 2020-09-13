@@ -77,8 +77,8 @@ VALUES (:well_id, :attr_id, :value)
 -- :name create-error-info! :! :n
 -- :doc create a new error info given device id and info
 INSERT INTO device_error
-(device_id, error)
-VALUES (:device_id, :error)
+(device_id, error, time)
+VALUES (:device_id, :error, STR_TO_DATE(:time, '%Y-%m-%d %T'))
 
 -- :name get-attr-value-id :? :1
 -- :doc get id of attribute value given attribute and well

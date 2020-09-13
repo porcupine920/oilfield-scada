@@ -60,7 +60,7 @@
  #_(create-well-attr-value-from-map! (dissoc-multiple params #{:type :device_id :device_type :oil_field :oil_plant :oil_well}) oil_field oil_plant oil_well)
 
 (defn create-device-error-info!
-  [{:keys [device_id error]}]
-  (if (not= 0 (count error)) (db/create-error-info! {:device_id device_id :error error}))
+  [{:keys [device_id error time]}]
+  (if (not= 0 (count error)) (db/create-error-info! {:device_id device_id :error error :time time}))
   200)
       
