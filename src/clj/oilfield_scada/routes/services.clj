@@ -12,7 +12,7 @@
     [ring.util.http-response :refer :all]
     [clojure.java.io :as io]
     [clojure.tools.logging :as log]
-    [oilfield-scada.db.services :refer [create-well-info-from-json!]]
+    [oilfield-scada.db.services :refer [create-well-info-from-json! create-device-error-info!]]
     [oilfield-scada.routes.websockets :refer [notify-clients!]]
     [oilfield-scada.util :refer [upload-data! get-current-time generate-query-resp send-ws-msg!]]))
 
@@ -41,11 +41,12 @@
    ["/register"
     {:post {:summary "device registration"
             :parameters {:body {:device_id string? :type string? :device_type string?
-                                :oil_field string? :oil_plant string? :oil_well string?
-                                :range string? :well_depth string? :pump_depth string?
-                                :pump_type string? :rod_parameters string?}}
+ ;                               :range string? :well_depth string? :pump_depth string?
+ ;                               :pump_type string? :rod_parameters string?                               
+                                :oil_field string? :oil_plant string? :oil_well string?}}
             :responses {200 {:body {:type string? :device_id string? :device_type string? :result pos-int?}}}
             :handler (fn [{{body :body} :parameters}]
+                       (prn body)
                        (try
                          (create-well-info-from-json! body)
                          {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result 200}}
@@ -59,10 +60,10 @@
                                 :time string? :error string?}}
             :responses {200 {:body {:type string? :device_id string? :device_type string? :result pos-int?}}}
             :handler (fn [{{body :body} :parameters}]
-                       {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result 200}})}}]
+                       {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result (create-device-error-info! body)}})}}]
 
    ["/clock"
-    {:post {:summary "clock synchronicity service"
+    {:post {:summary "clock synchronization service"
             :parameters {:body {:device_id string? :type string? :device_type string?}}
             :responses {200 {:body {:type string? :device_id string? :device_type string? :current_date string?}}}
             :handler (fn [{{body :body} :parameters}]
@@ -78,13 +79,13 @@
    ["/data"
      {:post {:summary "data acquisition"
              :parameters {:body {:device_id string? :type string? :device_type string? :av string? :ac string?
-;                                 :ap string? :bv string? :bc string? :bp string? :cv string? :cc string?
-;                                 :cp string? :load string? :displacement string? :crankpos string? :motorspd string?
+                                 :ap string? :bv string? :bc string? :bp string? :cv string? :cc string?
+                                 :cp string? :load string? :displacement string? :crankpos string? :motorspd string?
                                  :time string?}}
              :responses {200 {:body {:type string?
                                      :device_id string? :device_type string?
                                      :result pos-int?}}}
              :handler (fn [{{body :body} :parameters}]
-                        (send-ws-msg! body)
+                        #_(send-ws-msg! body)
                         {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result (upload-data! body)}})}}]])
 

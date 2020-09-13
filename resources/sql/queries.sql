@@ -29,7 +29,7 @@ VALUES (:name)
 -- :name get-oil-field-id :? :1
 -- :doc get id of oil field given the name if exist
 SELECT id FROM oil_field
-WHERE name = :name
+WHERE BINARY(name) = BINARY(:name)
 
 -- :name get-last-id :? :1
 -- :doc get last insert id
@@ -44,7 +44,7 @@ VALUES (:name, :field_id)
 -- :name get-oil-plant-id :? :1
 -- :doc get id of oil plant given the name if exist
 SELECT id FROM oil_plant
-WHERE name = :name AND field_id = :field_id
+WHERE BINARY(name) = BINARY(:name) AND field_id = :field_id
 
 -- :name create-oil-well! :! :n
 -- :doc create a new oil well record
@@ -55,7 +55,7 @@ VALUES (:name, :plant_id, :device_id)
 -- :name get-oil-well-id :? :1
 -- :doc get id of oil well given the name if exist
 SELECT id FROM oil_well
-WHERE name = :name AND plant_id = :plant_id
+WHERE BINARY(name) = BINARY(:name) AND plant_id = :plant_id
 
 -- :name create-attr! :! :n
 -- :doc create a new attribute
@@ -73,6 +73,12 @@ WHERE name = :name
 INSERT INTO well_attr_value
 (well_id, attr_id, value)
 VALUES (:well_id, :attr_id, :value)
+
+-- :name create-error-info! :! :n
+-- :doc create a new error info given device id and info
+INSERT INTO device_error
+(device_id, error)
+VALUES (:device_id, :error)
 
 -- :name get-attr-value-id :? :1
 -- :doc get id of attribute value given attribute and well

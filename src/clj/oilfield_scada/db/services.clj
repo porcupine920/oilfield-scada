@@ -2,19 +2,23 @@
   (:require [oilfield-scada.db.core :as db]
             [oilfield-scada.util :refer [dissoc-multiple]]))
 
+(defn to-bytes
+  [s]
+  (.getBytes s "UTF-8"))
+
 (defn create-oil-field!
   [name]
-  (let [id (:id (db/get-oil-field-id {:name name}))]
+  (let [id (:id (db/get-oil-field-id {:name (to-bytes name)}))]
     (if (nil? id)
-      (do (db/create-oil-field! {:name name})
+      (do (db/create-oil-field! {:name (to-bytes name)})
           (:id (db/get-last-id)))
       id)))
 
 (defn create-oil-plant!
   [plant field]
-  (let [id (:id (db/get-oil-plant-id {:name plant :field_id (create-oil-field! field)}))]
+  (let [id (:id (db/get-oil-plant-id {:name (to-bytes plant) :field_id (create-oil-field! field)}))]
     (if (nil? id)
-      (do (db/create-oil-plant! (assoc {:name plant} :field_id (create-oil-field! field)))
+      (do (db/create-oil-plant! (assoc {:name (to-bytes plant)} :field_id (create-oil-field! field)))
           (:id (db/get-last-id)))
       id)))
 
@@ -22,9 +26,9 @@
   ([well plant field]
    (:id (db/get-oil-well-id {:name well :plant_id (create-oil-plant! plant field)})))
   ([well plant field dev_id]
-  (let [id (:id (db/get-oil-well-id {:name well :plant_id (create-oil-plant! plant field)}))]
+  (let [id (:id (db/get-oil-well-id {:name (to-bytes well) :plant_id (create-oil-plant! plant field)}))]
     (if (nil? id)
-      (do (db/create-oil-well! (assoc {:name well :device_id dev_id} :plant_id (create-oil-plant! plant field)))
+      (do (db/create-oil-well! (assoc {:name (to-bytes well) :device_id dev_id} :plant_id (create-oil-plant! plant field)))
           (:id (db/get-last-id)))
       id))))
 
@@ -52,6 +56,11 @@
 
 (defn create-well-info-from-json!
   [{:keys [device_id oil_field oil_plant oil_well] :as params}]
-  (create-oil-well! oil_well oil_plant oil_field device_id)
-  (create-well-attr-value-from-map! (dissoc-multiple params #{:type :device_id :device_type :oil_field :oil_plant :oil_well}) oil_field oil_plant oil_well))
+  (create-oil-well! oil_well oil_plant oil_field device_id))
+ #_(create-well-attr-value-from-map! (dissoc-multiple params #{:type :device_id :device_type :oil_field :oil_plant :oil_well}) oil_field oil_plant oil_well)
 
+(defn create-device-error-info!
+  [{:keys [device_id error]}]
+  (if (not= 0 (count error)) (db/create-error-info! {:device_id device_id :error error}))
+  200)
+      
