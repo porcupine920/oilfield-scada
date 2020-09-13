@@ -2,7 +2,9 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [clojure.walk :refer [keywordize-keys]]
+            [clojure.tools.logging :as log]
             [clj-time.format :as f]
+            [gniazdo.core :as ws]
             [clj-time.core :refer [to-time-zone time-zone-for-offset]]
             [clj-time.coerce :refer [from-long to-long]]))
 
@@ -25,7 +27,7 @@
 
 (def server-ip "152.136.103.199")
 
-(defn upload-data
+(defn upload-data!
   [param]
   (let [{:keys [status body]}
         (client/post (format "http://%s:8080/api/v1/datapoints" server-ip)
@@ -77,4 +79,15 @@
 
 (defn generate-ws-msg
   [params]
-  params)
+  (json/write-str (dissoc-multiple params #{:type :device_id :device_type})))
+
+(defn send-to-ws-chan
+  [port chan msg]
+  (let [socket (ws/connect (format "ws://localhost:%d/ws" port) :on-error #(log/error "Error occurred: " %))]
+    (ws/send-msg socket msg)
+    (ws/close socket)))
+
+(defn send-ws-msg!
+  [params]
+  (let [{:keys [device_id time]} params]
+    (send-to-ws-chan 3000 device_id (generate-ws-msg params))))

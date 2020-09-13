@@ -11,8 +11,10 @@
     [oilfield-scada.middleware.exception :as exception]
     [ring.util.http-response :refer :all]
     [clojure.java.io :as io]
+    [clojure.tools.logging :as log]
+    [oilfield-scada.db.services :refer [create-well-info-from-json!]]
     [oilfield-scada.routes.websockets :refer [notify-clients!]]
-    [oilfield-scada.util :refer [upload-data get-current-time generate-query-resp]]))
+    [oilfield-scada.util :refer [upload-data! get-current-time generate-query-resp send-ws-msg!]]))
 
 (defn service-routes []
   ["/dcs/daqsystem"
@@ -44,7 +46,12 @@
                                 :pump_type string? :rod_parameters string?}}
             :responses {200 {:body {:type string? :device_id string? :device_type string? :result pos-int?}}}
             :handler (fn [{{body :body} :parameters}]
-                       {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result 200}})}}]
+                       (try
+                         (create-well-info-from-json! body)
+                         {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result 200}}
+                         (catch Exception e
+                           (log/error e)
+                           {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result 500}})))}}]
 
    ["/heartbeat"
     {:post {:summary "heartbeat service"
@@ -78,6 +85,6 @@
                                      :device_id string? :device_type string?
                                      :result pos-int?}}}
              :handler (fn [{{body :body} :parameters}]
-                        #_(notify-clients! body)
-                        {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result (upload-data body)}})}}]])
+                        (send-ws-msg! body)
+                        {:status 200 :body {:type (:type body) :device_id (:device_id body) :device_type (:device_type body) :result (upload-data! body)}})}}]])
 
