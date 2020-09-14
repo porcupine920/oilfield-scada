@@ -28,4 +28,4 @@
   (async/as-channel request websocket-callbacks))
 
 (def websocket-routes
-  [["/ws/*" ws-handler]])
+  [["/ws" ws-handler]])
