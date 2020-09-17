@@ -80,6 +80,24 @@ INSERT INTO device_error
 (device_id, error, time)
 VALUES (:device_id, :error, STR_TO_DATE(:time, '%Y-%m-%d %T'))
 
+-- :name get-all-oil-fields :?
+-- :doc get ids and names all fields
+SELECT id, name FROM oil_field
+
+-- :name get-oil-plants-of-field :?
+-- :doc get ids and names of all oil plants given id of oil field
+SELECT id, name FROM oil_plant
+WHERE field_id = :id
+
+-- :name get-name-dev-id-of-plant :?
+-- :doc get names and device ids of all oil wells given id of oil plant
+SELECT name, device_id FROM oil_well
+WHERE plant_id = :id
+
+-- :name get-all-attrs :?
+-- :doc get all names and descriptions of attributes
+SELECT name, description FROM attr
+
 -- :name get-attr-value-id :? :1
 -- :doc get id of attribute value given attribute and well
 SELECT id FROM well_attr_value

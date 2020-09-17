@@ -64,3 +64,19 @@
   (if (not= 0 (count error)) (db/create-error-info! {:device_id device_id :error error :time time}))
   200)
       
+(defn get-all-oil-fields
+  "get ids and names of all oil fields"
+  []
+  (db/get-all-oil-fields))
+
+(defn get-oil-plants-of-field
+  [field]
+  (db/get-oil-plants-of-field {:id field}))
+
+(defn get-name-devid-of-well
+  [plant]
+  (db/get-name-dev-id-of-plant {:id plant}))
+
+(defn get-all-attrs
+  []
+  (db/get-all-attrs))

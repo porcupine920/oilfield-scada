@@ -7,6 +7,7 @@
                  [clojure.java-time "0.3.2"]
                  [clj-time "0.15.2"]
                  [clj-http "3.10.1"]
+                 [cljs-ajax "0.8.0"]
                  [com.cognitect/transit-clj "1.0.324"]
                  [com.fasterxml.jackson.core/jackson-core "2.11.2"]
                  [com.fasterxml.jackson.core/jackson-databind "2.11.2"]
