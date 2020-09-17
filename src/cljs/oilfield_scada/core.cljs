@@ -5,8 +5,6 @@
             [oilfield-scada.websockets :as ws]
             [oilfield-scada.util :refer [generate-chart-data]]))
 
-(def day (atom 3))
-
 (def chart-data (atom [["时间" "值"] [0 0]]))
 
 (defonce messages (atom []))
@@ -121,17 +119,15 @@
 (defonce ready? (atom false))
 
 (defonce initialize
-  (do
-    (js/google.charts.load (clj->js {:packages ["corechart"]}))
-    (js/google.charts.setOnLoadCallback
-      (fn google-visualization-loaded []
-        (reset! ready? true)))))
+  (do (js/google.charts.load (clj->js {:packages ["corechart"]}))
+      (js/google.charts.setOnLoadCallback
+       (fn google-visualization-loaded []
+         (reset! ready? true)))))
 
 (defn data-table [data]
-  (cond
-    (map? data) (js/google.visualization.DataTable. (clj->js data))
-    (string? data) (js/google.visualization.Query. data)
-    (seqable? data) (js/google.visualization.arrayToDataTable (clj->js data))))
+  (cond (map? data) (js/google.visualization.DataTable. (clj->js data))
+        (string? data) (js/google.visualization.Query. data)
+        (seqable? data) (js/google.visualization.arrayToDataTable (clj->js data))))
 
 (defn draw-chart [chart-type data options]
   [:div
