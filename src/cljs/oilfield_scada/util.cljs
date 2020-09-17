@@ -18,13 +18,16 @@
          (vec (map (fn [v] (v i)) m)))))
 
 (defn get-keys [m]
-  (map (fn [m] (str "#" ((clojure.string/split (key (first m)) #"#") 2))) m))
+  (map (fn [m]
+         (str "#" ((clojure.string/split (key (first m)) #"#") 2))) m))
 
 (defn get-sequence [m]
-  (map (fn [m] (val (first m))) m))
+  (map (fn [m]
+         (val (first m))) m))
 
 (defn pad-time-first [m]
-  (map (fn [v] (vec (conj (map #(% 1) v) (format-date (first (first v)))))) m))
+  (map (fn [v]
+         (vec (conj (map #(% 1) v) (format-date (first (first v)))))) m))
 
 (defn generate-chart-data [m]
   (vec (cons (vec (cons "date" (get-keys m))) ((comp pad-time-first transpose get-sequence) m))))
