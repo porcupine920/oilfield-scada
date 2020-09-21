@@ -14,7 +14,7 @@
     [clojure.tools.logging :as log]
     [oilfield-scada.db.services :refer [create-well-info-from-json! create-device-error-info! get-all-oil-fields get-oil-plants-of-field get-name-devid-of-well get-all-attrs]]
     [oilfield-scada.routes.websockets :refer [notify-clients!]]
-    [oilfield-scada.util :refer [upload-data! get-current-time generate-query-resp send-ws-msg!]]))
+    [oilfield-scada.util :refer [uuid upload-data! get-current-time generate-query-resp send-ws-msg!]]))
 
 (defn service-routes [] 
   ["/dcs"
@@ -47,10 +47,29 @@
 
    ["/api/query/data"
     {:post {:summary "query value according to time, device and attribute"
-            :parameters {:body {:start string? :dev string? :attr string? :points int?}}
+            :parameters {:body {:start string? :end string? :interval int? :dev string? :attr string? :points int?}}
             :responses {200 {:body {:result vector?}}}
             :handler (fn [{{body :body} :parameters}]
                        {:status 200 :body {:result (generate-query-resp body)}})}}]
+
+   ["/api/query/data/download"
+    {:post {:summary "downloads a file"
+            :parameters {:body {:data coll?}}
+            :swagger {:produces ["text/csv"]}
+            :handler (fn [{{{:keys [data]} :body} :parameters}]
+                       (let [uid (uuid)]
+                       (with-open [w (clojure.java.io/writer (str "/var/tmp/data." uid ".csv"))]
+                         (doseq [row data] (.write w (apply str (conj (interpose "," row) "\n")))))
+                       {:status 200
+                        :headers {"Content-Type" "text/csv"}
+                        :body (try
+                                (-> (str "/var/tmp/data." uid ".csv")
+                                    (io/resource)
+                                    (io/input-stream))
+                                (catch java.io.IOException e
+                                           (log/error e))
+                                (finally
+                                  (clojure.java.io/delete-file (str "/var/tmp/data." uid ".csv"))))}))}}]
 
    ["/api/query/fields"
     {:get {:summary "query ids and names of all oil fields"
