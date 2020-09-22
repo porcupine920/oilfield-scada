@@ -63,8 +63,7 @@
                        {:status 200
                         :headers {"Content-Type" "text/csv"}
                         :body (try
-                                (-> (str "/var/tmp/data." uid ".csv")
-                                    (io/resource)
+                                (-> (str "file:///var/tmp/data." uid ".csv")
                                     (io/input-stream))
                                 (catch java.io.IOException e
                                            (log/error e))
