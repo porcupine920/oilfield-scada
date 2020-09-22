@@ -41,11 +41,11 @@
 
 (defn generate-request
   [param]
-  (let [{:keys [start end dev attr points] :or {points 600 end nil}} param
-        start_time (to-long (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") start))
-        end_time (if (empty? end) nil (to-long (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") end)))
+  (let [{:keys [start end interval dev attr points] :or {points 600 end nil}} param
+        start_time (- (to-long (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") start)) (* 8 3600000))
+        end_time (if (= "null" end) nil (- (to-long (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") end)) (* 8 3600000)))
         result {:start_absolute start_time :time_zone "Asia/Shanghai"
-                :metrics (into [] (for [i (range points)] {:tags {:tagtype ["value"]} :name (apply str (interpose "#" [dev attr (inc i)])) :limit 10000 :aggregators [{:name "first" :sampling {:value 5 :unit "minutes"}}]}))}]
+                :metrics (into [] (for [i (range points)] {:tags {:tagtype ["value"]} :name (apply str (interpose "#" [dev attr (inc i)])) :limit 10000 :aggregators [{:name "first" :sampling {:value interval :unit "minutes"}}]}))}]
     (if (nil? end_time) result
         (assoc result :end_absolute end_time))))
 
@@ -66,6 +66,8 @@
 (defn generate-query-resp
   [param]
   (result-to-resp (query-metric-from server-ip param)))
+
+(defn uuid [] (.toString (java.util.UUID/randomUUID)))
 
 (fn [v]
   ((fn merge [v m]
