@@ -57,18 +57,19 @@
             :parameters {:body {:data coll?}}
             :swagger {:produces ["text/csv"]}
             :handler (fn [{{{:keys [data]} :body} :parameters}]
-                       (let [uid (uuid)]
-                       (with-open [w (clojure.java.io/writer (str "/var/tmp/data." uid ".csv"))]
-                         (doseq [row data] (.write w (apply str (conj (interpose "," row) "\n")))))
+                       (let [path (str "/var/tmp/data." (uuid) ".csv")
+                             f (future (with-open [w (clojure.java.io/writer path)]
+                                         (doseq [row data] (.write w (apply str (conj (interpose "," row) "\n"))))))]
+                         (deref f)
                        {:status 200
                         :headers {"Content-Type" "text/csv"}
                         :body (try
-                                (-> (str "file:///var/tmp/data." uid ".csv")
+                                (-> (str "file://" path)
                                     (io/input-stream))
                                 (catch java.io.IOException e
                                            (log/error e))
                                 (finally
-                                  (clojure.java.io/delete-file (str "/var/tmp/data." uid ".csv"))))}))}}]
+                                  (future (clojure.java.io/delete-file path))))}))}}]
 
    ["/api/query/fields"
     {:get {:summary "query ids and names of all oil fields"
