@@ -12,8 +12,14 @@
 (defn int-value [v]
   (-> v .-target .-value int))
 
-(defn str-value [v]
-  (-> v .-target .-value str))
+(defn str-value [e]
+  (let [v (-> e .-target .-value)]
+    (if (nil? v) nil
+        (str v))))
+
+(defn from-selected [id]
+  (let [e (.getElementById js/document id)]
+    (.-text (aget (.-options e) (.-selectedIndex e)))))
 
 (defn message-list []
   [:ul
@@ -58,11 +64,13 @@
 
 (defonce wells (atom nil))
 
+(defonce chart-title (atom "采集量"))
+
 (defn wells-list []
   [:div
-   [:label "油井"]
+   [:label.col-md-2 "油井"]
    (vec
-    (cons :select
+    (cons :select.col-md-4
           (cons {:id "well"}
                 (if (= 0 (count @wells)) [[:option {:value 0} "请选择"]]
                     (map (fn [{:keys [device_id name]}]
@@ -70,8 +78,8 @@
 
 (defn plants-list []
   [:div
-   [:label "采油厂"]
-   (vec (cons :select
+   [:label.col-md-2 "采油厂"]
+   (vec (cons :select.col-md-4
               (cons {:id "plant" :on-change #(get-select-options-via-post "wells" {:id (int-value %)} wells)}
                     (cons [:option "请选择"]
                           (when @plants
@@ -81,8 +89,8 @@
 (defn fields-list []
   (get-select-options "fields" fields)
   [:div
-   [:label "油田"]
-   (vec (cons :select
+   [:label.col-md-2 "油田"]
+   (vec (cons :select.col-md-4
               (cons {:id "field" :on-change #(get-select-options-via-post "plants" {:id (int-value %)} plants)}
                     (cons [:option "请选择"]                       
                           (when @fields
@@ -94,8 +102,8 @@
 (defn attrs-list []
   (get-select-options "attrs" attrs)
   [:div
-   [:label "属性"]
-    (vec (cons :select
+   [:label.col-md-2 "属性"]
+    (vec (cons :select.col-md-4
           (cons {:name "attr" :id "attr"}
                 (cons [:option {:value 0} "请选择"]                       
                       (when @fields
@@ -106,15 +114,17 @@
 
 (defonce start-time (atom nil))
 
+(defonce end-time (atom nil))
+
 (defn get-graph-data [_]
-  (if (nil? (re-find #"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" @start-time))
-    (js/alert "时间格式: yyyy-MM-dd HH:mm:ss")
-    (let [dev (.-value (.getElementById js/document "well"))
-          attr (.-value (.getElementById js/document "attr"))]
-      (cond (= dev "0") (js/alert "请选择正确的油井")
-            (= attr "0") (js/alert "请选择正确的属性")
-            :else (do (get-select-options-via-post "data" {:dev dev :attr attr :start @start-time :points 10} data-grid)
-                      (reset! chart-data (generate-chart-data @data-grid)))))))
+  (let [dev (.-value (.getElementById js/document "well"))
+        attr (.-value (.getElementById js/document "attr"))]
+    (cond (= dev "0") (js/alert "请选择正确的油井")
+          (= attr "0") (js/alert "请选择正确的属性")
+          :else (do (get-select-options-via-post "data" {:dev dev :attr attr :start @start-time
+                                                         :end (if (nil? @end-time) "null" @end-time) :points 10} data-grid)
+                    (reset! chart-title (from-selected "attr"))
+                    (reset! chart-data (generate-chart-data @data-grid))))))
 
 (defonce ready? (atom false))
 
@@ -144,30 +154,49 @@
 (defn home-page []
  [:div.container
   [:div.row
-   [:div.col-md-42
-    [:h2 "Welcome to Oil Field SCADA"]]]
+   [:div.col-md-4]
+   [:div.col-md-4
+    [:h2 "  "]]]
   [:div.row
-   [:div.col-sm-6
+   [:div.col-md-1]
+   [:div.col-md-4
     [fields-list]]
    [:div.col-sm-6
-    [plants-list]]
-   [:div.col-sm-6
+    [plants-list]]]
+  [:div.row
+   [:div.col-md-1]
+   [:div.col-md-4
     [wells-list]]
-   [:div.col-sm-6
-    [attrs-list]]
-   [:div.col-sm-6
-    [:label "起始时间"]
+   [:div.col-md-6
+    [attrs-list]]]
+  [:div.row
+   [:div.col-sm-1]
+   [:div.col-sm-4
+    [:label.col-md-2 "起始"]
     [:input
-     {:id "start-time" :type :text
-      :on-change #(reset! start-time (str-value %))}]]
+     {:id "start-time" :type :datetime-local
+      :on-change #(reset! start-time (str (apply str (replace {\T \space} (str-value %))) ":00"))}]]
    [:div.col-sm-6
-    [:button.btn.btn-primary {:on-click get-graph-data} "Graph"]]]
+    [:label.col-md-2 "结束"]
+    [:input
+     {:id "end-time" :type :datetime-local
+      :on-change #(let [v (str-value %)] (if (nil? v) nil (reset! end-time (str (clojure.string/replace v #"T" " " ) ":00"))))}]]]
+  [:div.row
+   [:div.col-md-12]]
+  [:div.row
+   [:div.col-md-12]]
+  [:div.row
+   [:div.col-md-4]
+   [:div.col-md-2
+    [:button.btn.btn-primary {:on-click get-graph-data} "显示变化曲线"]]
+   [:div.col-md-2
+    [:button.btn.btn-primary "下载为csv"]]]
   [:div.row
    [:div.col-md-12
     [draw-chart
     "LineChart"
     @chart-data
-    {:title (str "采集值")}]]]])
+    {:title @chart-title}]]]])
 
 (defn update-messages! [{:keys [message]}]
   (swap! messages #(vec (take 10 (conj % message)))))
