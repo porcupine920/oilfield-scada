@@ -12,6 +12,7 @@
                  [com.fasterxml.jackson.core/jackson-core "2.11.2"]
                  [com.fasterxml.jackson.core/jackson-databind "2.11.2"]
                  [com.google.protobuf/protobuf-java "3.8.0"]
+                 [com.taoensso/carmine "3.0.0"]
                  [conman "0.9.0"]
                  [cprop "0.1.17"]
                  [expound "0.8.5"]

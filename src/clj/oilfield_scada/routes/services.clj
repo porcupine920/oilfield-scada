@@ -14,6 +14,7 @@
     [clojure.tools.logging :as log]
     [oilfield-scada.db.services :refer [create-well-info-from-json! create-device-error-info! get-all-oil-fields get-oil-plants-of-field get-name-devid-of-well get-all-attrs]]
     [oilfield-scada.routes.websockets :refer [notify-clients!]]
+    [oilfield-scada.redis.service :refer [get-latest-value]]
     [oilfield-scada.util :refer [uuid upload-data! get-current-time generate-query-resp send-ws-msg!]]))
 
 (defn service-routes [] 
@@ -46,6 +47,13 @@
                        {:status 200 :body {:result (+ x y)}})}}]
 
    ["/api/query/data"
+    {:post {:summary "query latest value given id of device"
+            :parameters {:body {:device_id string?}}
+            :responses {200 {:body {:result coll?}}}
+            :handler (fn [{{{device_id :device_id} :body} :parameters}]
+                       {:status 200 :body {:result (get-latest-value device_id)}})}}]
+
+   ["/api/query/data/sequence"
     {:post {:summary "query value according to time, device and attribute"
             :parameters {:body {:start string? :end string? :interval int? :dev string? :attr string? :points int?}}
             :responses {200 {:body {:result vector?}}}

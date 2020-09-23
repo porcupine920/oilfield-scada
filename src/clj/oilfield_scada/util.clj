@@ -6,7 +6,8 @@
             [clj-time.format :as f]
             [gniazdo.core :as ws]
             [clj-time.core :refer [to-time-zone time-zone-for-offset]]
-            [clj-time.coerce :refer [from-long to-long]]))
+            [clj-time.coerce :refer [from-long to-long]]
+            [oilfield-scada.redis.service :refer [reset-hashmap-value!]]))
 
 (defn dissoc-multiple
   [m s]
@@ -20,6 +21,7 @@
   (let [t (- (to-long (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") time)) (* 8 3600000))
         dev (:device_id data)
         points (dissoc-multiple data #{:type :device_id :device_type :time})]
+    (reset-hashmap-value! dev points)
     (into []
           (apply concat (for [[k v] points]
                           (map-indexed (fn [i n]
