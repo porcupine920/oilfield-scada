@@ -27,7 +27,7 @@
                           (map-indexed (fn [i n]
                                          {:name (apply str (interpose "#" [dev (name k) (inc i)])) :datapoints [[t (Float/parseFloat n)]] :tags {:tagtype "value"}}) (clojure.string/split v #",")))))))
 
-(def server-ip "152.136.103.199")
+(def server-ip "localhost")
 
 (defn upload-data!
   [param]
