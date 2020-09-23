@@ -21,7 +21,7 @@
   (let [t (- (to-long (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") time)) (* 8 3600000))
         dev (:device_id data)
         points (dissoc-multiple data #{:type :device_id :device_type :time})]
-    (reset-hashmap-value! dev points)
+    (future (reset-hashmap-value! dev points))
     (into []
           (apply concat (for [[k v] points]
                           (map-indexed (fn [i n]
