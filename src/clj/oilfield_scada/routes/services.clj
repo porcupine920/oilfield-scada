@@ -48,10 +48,10 @@
 
    ["/api/query/data"
     {:post {:summary "query latest value given id of device"
-            :parameters {:body {:device_id string?}}
+            :parameters {:body {:dev string?}}
             :responses {200 {:body {:result coll?}}}
-            :handler (fn [{{{device_id :device_id} :body} :parameters}]
-                       {:status 200 :body {:result (get-latest-value device_id)}})}}]
+            :handler (fn [{{{dev :dev} :body} :parameters}]
+                       {:status 200 :body {:result (get-latest-value dev)}})}}]
 
    ["/api/query/data/sequence"
     {:post {:summary "query value according to time, device and attribute"

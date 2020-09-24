@@ -13,5 +13,5 @@
 (defn get-latest-value
   [dev]
   (let [res (wcar* (car/hgetall dev))]
-    {(keyword dev) (into {} (for [i (range 1 (count res) 2)]
-               [(keyword (get res (dec i))) (vec (map #(Float/parseFloat %) (clojure.string/split (get res i) #",")))]))}))
+    (into {} (for [i (range 1 (count res) 2)]
+               [(keyword (get res (dec i))) (vec (map #(Float/parseFloat %) (clojure.string/split (get res i) #",")))]))))

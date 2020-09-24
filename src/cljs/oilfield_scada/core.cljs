@@ -3,9 +3,17 @@
             [reagent.dom :refer [render]]
             [ajax.core :refer [GET POST]]
             [oilfield-scada.websockets :as ws]
-            [oilfield-scada.util :refer [generate-chart-data]]))
+            [oilfield-scada.util :refer [get-chart-data-from get-load-chart-data]]))
 
-(def chart-data (atom [["时间" "值"] [0 0]]))
+(defonce data-grid (atom {}))
+
+(def ecurrent-data (atom [["点" "值"] [0 0]]))
+
+(def voltage-data (atom [["点" "值"] [0 0]]))
+
+(def power-data (atom [["点" "值"] [0 0]]))
+
+(def load-data (atom [["点" "值"] [0 0]]))
 
 (defonce messages (atom []))
 
@@ -97,34 +105,25 @@
                             (map (fn [{:keys [id name]}]
                                    [:option {:value id} name]) @fields))))))])
 
-(defonce attrs (atom nil))
-
-(defn attrs-list []
-  (get-select-options "attrs" attrs)
-  [:div
-   [:label.col-md-2 "属性"]
-    (vec (cons :select.col-md-4
-          (cons {:name "attr" :id "attr"}
-                (cons [:option {:value 0} "请选择"]                       
-                      (when @fields
-                        (map (fn [{:keys [description name]}]
-                               [:option {:value name} description]) @attrs))))))])
-
-(defonce data-grid (atom []))
-
-(defonce start-time (atom nil))
-
-(defonce end-time (atom nil))
-
 (defn get-graph-data [_]
-  (let [dev (.-value (.getElementById js/document "well"))
-        attr (.-value (.getElementById js/document "attr"))]
+  (let [dev (.-value (.getElementById js/document "well"))]
     (cond (= dev "0") (js/alert "请选择正确的油井")
-          (= attr "0") (js/alert "请选择正确的属性")
-          :else (do (get-select-options-via-post "data" {:dev dev :attr attr :start @start-time
-                                                         :end (if (nil? @end-time) "null" @end-time) :points 10} data-grid)
-                    (reset! chart-title (from-selected "attr"))
-                    (reset! chart-data (generate-chart-data @data-grid))))))
+          :else (do (get-select-options-via-post "data" {:dev dev} data-grid)
+                    (let [e-cur (get-chart-data-from @data-grid [:ac :bc :cc])]
+                      (if (<= (count e-cur) 1)
+                        (reset! ecurrent-data (get-chart-data-from @data-grid [:ac :bc :cc]))
+                        (reset! ecurrent-data e-cur)))
+                    (let [volt (get-chart-data-from @data-grid [:av :bv :cv])]
+                      (if (<= (count volt) 1)
+                        (reset! voltage-data (get-chart-data-from @data-grid [:av :bv :cv]))
+                        (reset! voltage-data volt)))
+                    (let [power (get-chart-data-from @data-grid [:ap :bp :cp])]
+                      (if (<= (count power) 1)
+                        (reset! power-data (get-chart-data-from @data-grid [:ap :bp :cp]))
+                        (reset! power-data power)))
+                    (let [load (get-load-chart-data @data-grid [:displacement :load])]
+                      (reset! load-data (get-load-chart-data @data-grid [:displacement :load]))
+                      (reset! load-data load))))))
 
 (defonce ready? (atom false))
 
@@ -167,36 +166,40 @@
    [:div.col-md-1]
    [:div.col-md-4
     [wells-list]]
-   [:div.col-md-6
+   #_[:div.col-md-6
     [attrs-list]]]
-  [:div.row
-   [:div.col-sm-1]
-   [:div.col-sm-4
-    [:label.col-md-2 "起始"]
-    [:input
-     {:id "start-time" :type :datetime-local
-      :on-change #(reset! start-time (str (apply str (replace {\T \space} (str-value %))) ":00"))}]]
-   [:div.col-sm-6
-    [:label.col-md-2 "结束"]
-    [:input
-     {:id "end-time" :type :datetime-local
-      :on-change #(let [v (str-value %)] (if (nil? v) nil (reset! end-time (str (clojure.string/replace v #"T" " " ) ":00"))))}]]]
   [:div.row
    [:div.col-md-12]]
   [:div.row
    [:div.col-md-12]]
   [:div.row
    [:div.col-md-4]
-   [:div.col-md-2
-    [:button.btn.btn-primary {:on-click get-graph-data} "显示变化曲线"]]
-   [:div.col-md-2
+   [:div.col-md-4
+    [:button.btn.btn-primary {:on-click get-graph-data} "显示曲线"]]
+   #_[:div.col-md-2
     [:button.btn.btn-primary "下载为csv"]]]
   [:div.row
-   [:div.col-md-12
+   [:div.col-md-6
     [draw-chart
     "LineChart"
-    @chart-data
-    {:title @chart-title}]]]])
+     @ecurrent-data
+     {:title "电流"}]]
+   [:div.col-md-6
+    [draw-chart
+    "LineChart"
+     @voltage-data
+     {:title "电压"}]]]
+  [:div.row
+   [:div.col-md-6
+    [draw-chart
+    "LineChart"
+     @power-data
+     {:title "功率"}]]
+   [:div.col-md-6
+    [draw-chart
+    "LineChart"
+     @load-data
+     {:title "负载"}]]]])
 
 (defn update-messages! [{:keys [message]}]
   (swap! messages #(vec (take 10 (conj % message)))))
