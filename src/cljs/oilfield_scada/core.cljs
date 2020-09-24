@@ -109,21 +109,10 @@
   (let [dev (.-value (.getElementById js/document "well"))]
     (cond (= dev "0") (js/alert "请选择正确的油井")
           :else (do (get-select-options-via-post "data" {:dev dev} data-grid)
-                    (let [e-cur (get-chart-data-from @data-grid [:ac :bc :cc])]
-                      (if (<= (count e-cur) 1)
-                        (reset! ecurrent-data (get-chart-data-from @data-grid [:ac :bc :cc]))
-                        (reset! ecurrent-data e-cur)))
-                    (let [volt (get-chart-data-from @data-grid [:av :bv :cv])]
-                      (if (<= (count volt) 1)
-                        (reset! voltage-data (get-chart-data-from @data-grid [:av :bv :cv]))
-                        (reset! voltage-data volt)))
-                    (let [power (get-chart-data-from @data-grid [:ap :bp :cp])]
-                      (if (<= (count power) 1)
-                        (reset! power-data (get-chart-data-from @data-grid [:ap :bp :cp]))
-                        (reset! power-data power)))
-                    (let [load (get-load-chart-data @data-grid [:displacement :load])]
-                      (reset! load-data (get-load-chart-data @data-grid [:displacement :load]))
-                      (reset! load-data load))))))
+                    (reset! ecurrent-data (get-chart-data-from @data-grid [:ac :bc :cc]))
+                    (reset! voltage-data (get-chart-data-from @data-grid [:av :bv :cv]))
+                    (reset! power-data (get-chart-data-from @data-grid [:ap :bp :cp]))
+                    (reset! load-data (get-load-chart-data @data-grid [:displacement :load]))))))
 
 (defonce ready? (atom false))
 

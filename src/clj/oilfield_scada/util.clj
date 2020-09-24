@@ -22,12 +22,11 @@
         dev (:device_id data)
         points (dissoc-multiple data #{:type :device_id :device_type :time})]
     (future (reset-hashmap-value! dev points))
-    (into []
-          (apply concat (for [[k v] points]
-                          (map-indexed (fn [i n]
-                                         {:name (apply str (interpose "#" [dev (name k) (inc i)])) :datapoints [[t (Float/parseFloat n)]] :tags {:tagtype "value"}}) (clojure.string/split v #",")))))))
+    (into [] (for [[k v] points]
+                   {:name (apply str (interpose "#" [dev (name k)]))
+                    :datapoints (vec (map-indexed (fn [i n] [(+ t (* 100 i)) (Float/parseFloat n)]) (clojure.string/split v #","))) :tags {:tagtype "value"}}))))
 
-(def server-ip "152.136.103.199")
+(def server-ip "localhost")
 
 (defn upload-data!
   [param]
