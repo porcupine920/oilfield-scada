@@ -127,14 +127,14 @@
         (string? data) (js/google.visualization.Query. data)
         (seqable? data) (js/google.visualization.arrayToDataTable (clj->js data))))
 
-(defn draw-chart [chart-type data options]
+(defn draw-chart [data options]
   [:div
    (if @ready?
      [:div
       {:ref
        (fn [this]
          (when this
-           (.draw (new (aget js/google.visualization chart-type) this)
+           (.draw (new js/google.visualization.LineChart this)
                   (data-table data)
                   (clj->js options))))}]
      [:div "Loading..."])])
@@ -170,23 +170,19 @@
   [:div.row
    [:div.col-md-6
     [draw-chart
-    "LineChart"
      @ecurrent-data
      {:title "电流"}]]
    [:div.col-md-6
     [draw-chart
-    "LineChart"
      @voltage-data
      {:title "电压"}]]]
   [:div.row
    [:div.col-md-6
     [draw-chart
-    "LineChart"
      @power-data
      {:title "功率"}]]
    [:div.col-md-6
     [draw-chart
-    "LineChart"
      @load-data
      {:title "负载"}]]]])
 
